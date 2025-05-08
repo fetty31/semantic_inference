@@ -30,6 +30,7 @@
 """Module containing ROS message conversions."""
 
 import cv_bridge
+import cv2
 
 import semantic_inference_msgs.msg
 
@@ -85,3 +86,15 @@ class Conversions:
         msg.mask_ids = list(range(1, len(results.features) + 1))
         msg.features = [cls.to_feature(x) for x in results.features]
         return msg
+
+    @classmethod
+    def to_ros_rgb_image(cls, msg):
+        cv_img = Conversions.to_image(msg)
+
+        print(f"input image type: {msg.encoding}")
+        
+        rgb_img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
+        nrgb_img = cv2.normalize(rgb_img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+        # Transform back to Image message
+        return cls.bridge.cv2_to_imgmsg(nrgb_img, encoding="rgb8")

@@ -10,6 +10,8 @@ from semantic_inference import Config
 from semantic_inference_msgs.msg import FeatureImage, FeatureVectorStamped
 from semantic_inference_ros import Conversions, ImageWorkerConfig
 
+from sensor_msgs.msg import Image as ROSimage
+
 
 @dataclass
 class OpensetSegmentationNodeConfig(Config):
@@ -37,23 +39,37 @@ class OpensetSegmentationNode:
         rospy.loginfo(f"'{rospy.get_name()}': finished initializing!")
 
         self._pub = rospy.Publisher("~semantic/image_raw", FeatureImage, queue_size=1)
+        self._pub_img = rospy.Publisher("~semantic/image_ros", ROSimage, queue_size=1)
         self._clip_pub = rospy.Publisher(
             "~semantic/feature", FeatureVectorStamped, queue_size=1
         )
         self._worker = semantic_inference_ros.ImageWorker(
-            self.config.worker, "~color/image_raw", self._spin_once
+            self.config.worker, "/ona2/sensors/flir_camera_front/image_color", self._spin_once
         )
+        rospy.loginfo(f"'{rospy.get_name()}': subscribed to {self._worker._sub.name}")
+
         self._embedder = semantic_inference_ros.PromptEncoder(self._model.encoder)
 
     def _spin_once(self, header, img):
+
+        rospy.loginfo("Spinning...")
+
         with torch.no_grad():
             ret = self._model.segment(img, is_rgb_order=True).cpu()
 
+        rospy.loginfo("converting image...")
+
         msg = Conversions.to_feature_image(header, ret)
+
+        rospy.loginfo("Publishing...")
+
         self._pub.publish(msg)
         self._clip_pub.publish(
             Conversions.to_stamped_feature(header, ret.image_embedding)
         )
+
+        self._pub_img.publish(Conversions.to_ros_rgb_image(msg.image)) # publish colored image
+
 
     def spin(self):
         """Wait until ros shuts down."""
