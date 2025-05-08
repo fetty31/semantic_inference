@@ -3,6 +3,7 @@
   <!-- options -->
   <arg name="verbose" default="true" doc="Show output via stdout"/>
   <arg name="name" default="front" doc="Unique name"/> <!-- To-Do -->
+  <arg name="input_topic" default="semantic_inference/color/image_raw"/>
   <arg name="config_path" default="$(find semantic_inference_ros)/config/openset_segmentation.yaml" doc="Configuration file for object detector"/>
   <arg name="min_separation_s" default="0.0" doc="Minimum time between input images"/>
 
@@ -15,6 +16,7 @@
         launch-prefix = "$(arg venv)">
       <rosparam file="$(arg config_path)" ns="model"/>
       <param name="worker/min_separation_s" value="$(arg min_separation_s)"/>
+      <param name="input_topic" value="$(arg input_topic)"/>
   </node>
 
 </launch>

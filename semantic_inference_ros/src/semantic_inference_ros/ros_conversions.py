@@ -89,12 +89,25 @@ class Conversions:
 
     @classmethod
     def to_ros_rgb_image(cls, msg):
+        # Retreive segmented image 
         cv_img = Conversions.to_image(msg)
 
-        print(f"input image type: {msg.encoding}")
+        # Change dtype (from U16C1 to U8C1)
+        ncv_img = cv2.normalize(cv_img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         
-        rgb_img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
-        nrgb_img = cv2.normalize(rgb_img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        # COLORMAP_AUTUMN = 0
+        # COLORMAP_BONE = 1
+        # COLORMAP_COOL = 8
+        # COLORMAP_HOT = 11
+        # COLORMAP_HSV = 9
+        # COLORMAP_JET = 2
+        # COLORMAP_OCEAN = 5
+        # COLORMAP_PINK = 10
+        # COLORMAP_RAINBOW = 4
+        # COLORMAP_SPRING = 7
+        # COLORMAP_SUMMER = 6
+        # COLORMAP_WINTER = 3
+        rgb_img = cv2.applyColorMap(ncv_img, cv2.COLORMAP_HSV)
 
         # Transform back to Image message
-        return cls.bridge.cv2_to_imgmsg(nrgb_img, encoding="rgb8")
+        return cls.bridge.cv2_to_imgmsg(rgb_img, encoding="rgb8")

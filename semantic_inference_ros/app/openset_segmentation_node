@@ -43,8 +43,11 @@ class OpensetSegmentationNode:
         self._clip_pub = rospy.Publisher(
             "~semantic/feature", FeatureVectorStamped, queue_size=1
         )
+
+        input_topic = rospy.get_param('~input_topic')
+
         self._worker = semantic_inference_ros.ImageWorker(
-            self.config.worker, "/ona2/sensors/flir_camera_front/image_color", self._spin_once
+            self.config.worker, input_topic, self._spin_once
         )
         rospy.loginfo(f"'{rospy.get_name()}': subscribed to {self._worker._sub.name}")
 
