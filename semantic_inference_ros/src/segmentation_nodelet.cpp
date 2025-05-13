@@ -94,6 +94,7 @@ void declare_config(SegmentationNodelet::Config& config) {
 }
 
 void SegmentationNodelet::onInit() {
+  
   ros::NodeHandle nh = getPrivateNodeHandle();
   logging::Logger::addSink("ros", std::make_shared<RosLogSink>());
   logging::setConfigUtilitiesLogger();
@@ -146,7 +147,7 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
 
-  SLOG(DEBUG) << "Encoding: " << img_ptr->encoding << " size: " << img_ptr->image.cols
+  SLOG(INFO) << "Encoding: " << img_ptr->encoding << " size: " << img_ptr->image.cols
               << " x " << img_ptr->image.rows << " x " << img_ptr->image.channels()
               << " is right type? "
               << (img_ptr->image.type() == CV_8UC3 ? "yes" : "no");
