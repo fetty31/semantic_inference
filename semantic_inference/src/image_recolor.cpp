@@ -104,6 +104,24 @@ std::map<int16_t, std::array<uint8_t, 3>> loadColormap(const fs::path& filepath,
   return cmap;
 }
 
+std::map<int16_t, std::array<uint8_t, 3>> getColormap(ImageRecolor::Config& config) {
+
+  /*To-Do:
+    - read config::groups names and associate with config::specified_colors
+    - fill colormap with rgb
+  */
+
+  std::map<int16_t, std::array<uint8_t, 3>> cmap;
+
+  const uint8_t r = ;
+  const uint8_t g = ;
+  const uint8_t b = ;
+  const int16_t id = ;
+  cmap[id] = {r, g, b};
+
+  return cmap;
+}
+
 std::array<uint8_t, 3> getColorFromHLS(float ratio, float luminance, float saturation) {
   cv::Mat hls(1, 1, CV_32FC3);
   hls.at<float>(0) = 360.0 * ratio;
@@ -120,7 +138,11 @@ std::array<uint8_t, 3> getColorFromHLS(float ratio, float luminance, float satur
 ImageRecolor::ImageRecolor(const Config& config,
                            const std::map<int16_t, std::array<uint8_t, 3>>& colormap)
     : config(config::checkValid(config)), color_map_(colormap) {
-  if (std::filesystem::exists(config.colormap_path)) {
+  
+  if (!config.specified_colors.empty()){
+    color_map_ = getColorMap(config.specified_colors);
+  }
+  else if (std::filesystem::exists(config.colormap_path)) {
     color_map_ = loadColormap(config.colormap_path);
   }
 
@@ -249,10 +271,19 @@ void declare_config(GroupInfo& config) {
   field(config.name, "name");
 }
 
+void declare_config(ColorInfo& config) {
+  using namespace config;
+  name("ColorInfo");
+  field(config.source, "source");
+  field(config.rgb, "rgb");
+  field(config.name, "name");
+}
+
 void declare_config(ImageRecolor::Config& config) {
   using namespace config;
   name("ImageRecolor::Config");
   field(config.groups, "groups");
+  field(config.specified_colors, "specified_colors");
   field(config.default_color, "default_color");
   field(config.default_id, "default_id");
   field(config.offset, "offset");

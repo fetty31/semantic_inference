@@ -54,6 +54,8 @@
             <param name="worker/max_queue_size" value="$(arg max_image_queue_size)"/>
             <param name="worker/image_separation_s" value="$(arg min_separation_s)"/>
             <param name="image_rotator/rotation" value="$(arg rotation_type)"/>
+            <param name="show_config" value="True"/>
+            <param name="show_output_config" value="True"/>
         </node>
     </group>
 

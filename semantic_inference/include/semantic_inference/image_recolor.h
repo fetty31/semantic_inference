@@ -45,10 +45,17 @@ struct GroupInfo {
   std::vector<int16_t> labels;
 };
 
+struct ColorInfo {
+  std::string name;
+  std::string source;
+  std::vector<float> rgb;
+};
+
 class ImageRecolor {
  public:
   struct Config {
     std::vector<GroupInfo> groups;
+    std::vector<ColorInfo> specified_colors;
     std::vector<uint8_t> default_color{0, 0, 0};
     int16_t default_id = -1;
     int16_t offset = 0;
