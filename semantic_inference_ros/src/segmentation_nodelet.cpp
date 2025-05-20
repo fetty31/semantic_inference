@@ -40,11 +40,15 @@
 #include <semantic_inference/model_config.h>
 #include <semantic_inference/segmenter.h>
 
+#include <semantic_inference_msgs/Labels.h>
+
 #include <atomic>
 #include <mutex>
 #include <opencv2/core.hpp>
 #include <optional>
 #include <thread>
+#include <string>
+#include <unordered_set>
 
 #include "semantic_inference_ros/output_publisher.h"
 #include "semantic_inference_ros/ros_log_sink.h"
@@ -71,6 +75,8 @@ class SegmentationNodelet : public nodelet::Nodelet {
  private:
   void runSegmentation(const sensor_msgs::ImageConstPtr& msg);
 
+  semantic_inference_msgs::Labels extractLabels(const cv::Mat& image);
+
   Config config_;
   OutputPublisher::Config output_;
 
@@ -81,6 +87,8 @@ class SegmentationNodelet : public nodelet::Nodelet {
   std::unique_ptr<image_transport::ImageTransport> transport_;
   std::unique_ptr<OutputPublisher> output_pub_;
   image_transport::Subscriber sub_;
+
+  ros::Publisher labels_pub_;
 };
 
 void declare_config(SegmentationNodelet::Config& config) {
@@ -130,6 +138,10 @@ void SegmentationNodelet::onInit() {
 
   sub_ = transport_->subscribe(
       "color/image_raw", 1, &ImageWorker::addMessage, worker_.get());
+
+  SLOG(INFO) << "NODELET LOADED, defining publisher\n";
+  
+  labels_pub_ = nh.advertise<semantic_inference_msgs::Labels>("labels", 1);
 }
 
 SegmentationNodelet::~SegmentationNodelet() {
@@ -161,6 +173,41 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
 
   const auto derotated = image_rotator_.derotate(result.labels);
   output_pub_->publish(img_ptr->header, derotated, img_ptr->image);
+
+  labels_pub_.publish(extractLabels(derotated));
+}
+
+semantic_inference_msgs::Labels SegmentationNodelet::extractLabels(const cv::Mat& image)
+{
+  semantic_inference_msgs::Labels msg;
+
+  ImageRecolor* recolor_ptr = output_pub_->getImageRecolorPtr();
+  cv_bridge::CvImagePtr label_image_ = cv_bridge::CvImagePtr(new cv_bridge::CvImage());
+  label_image_->encoding = "16SC1";
+  label_image_->image = cv::Mat(image.rows, image.cols, CV_16SC1);
+  recolor_ptr->relabelImage(image, label_image_->image);
+
+  static auto name_map = recolor_ptr->getNameRemap(); // std::map<int16_t, std::string>
+  std::unordered_set<std::string> name_set;
+
+  for (int r = 0; r < label_image_->image.rows; ++r) {
+    for (int c = 0; c < label_image_->image.cols; ++c) {
+      const auto class_id = label_image_->image.at<int16_t>(r, c);
+
+      const auto iter = name_map.find(class_id);
+      if (iter != name_map.end()) {
+        name_set.insert(iter->second.data());
+      }else{
+        name_set.insert("unknown");
+      }
+    }
+  }
+
+  for(std::string key : name_set){
+    msg.labels.push_back(key);
+  }
+
+  return msg;
 }
 
 }  // namespace semantic_inference

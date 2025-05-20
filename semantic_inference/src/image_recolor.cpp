@@ -61,6 +61,7 @@ std::string vecToString(const std::vector<std::string>& vec) {
 }
 
 std::map<int16_t, std::array<uint8_t, 3>> loadColormap(const fs::path& filepath,
+                                                      std::map<int16_t, std::string>& name_map,
                                                        bool skip_first = true,
                                                        char delimiter = ',') {
   std::ifstream file(filepath.string());
@@ -98,29 +99,46 @@ std::map<int16_t, std::array<uint8_t, 3>> loadColormap(const fs::path& filepath,
     const uint8_t b = std::atoi(columns[3].c_str());
     const int16_t id = std::atoi(columns[5].c_str());
     cmap[id] = {r, g, b};
+    name_map[id] = columns[0]; // save class names
     row_number++;
   }
 
   return cmap;
 }
 
-std::map<int16_t, std::array<uint8_t, 3>> getColormap(ImageRecolor::Config& config) {
+// std::map<int16_t, std::array<uint8_t, 3>> getColorMap(const ImageRecolor::Config& config) {
 
-  /*To-Do:
-    - read config::groups names and associate with config::specified_colors
-    - fill colormap with rgb
-  */
+//   /*To-Do:
+//     - read config::groups names and associate with config::specified_colors
+//     - fill colormap with rgb
+//   */
 
-  std::map<int16_t, std::array<uint8_t, 3>> cmap;
+//   // For the moment, only raw & raw_int color types are accepted
+//   if( (config.specified_colors[0].source != "raw") || 
+//       (config.specified_colors[0].source != "raw_int"))
+//       return loadColormap(config.colormap_path);
 
-  const uint8_t r = ;
-  const uint8_t g = ;
-  const uint8_t b = ;
-  const int16_t id = ;
-  cmap[id] = {r, g, b};
+//   std::map<int16_t, std::array<uint8_t, 3>> cmap;
 
-  return cmap;
-}
+//   for(size_t i=0; i < config.specified_colors.size(); i++){
+//     uint8_t r, g, b;
+//     uint16_t id;
+//     if(config.specified_colors[i].source == "raw"){
+//       r = static_cast<uint8_t>(255.0f*config.specified_colors[0].rgb[0]);
+//       g = static_cast<uint8_t>(255.0f*config.specified_colors[0].rgb[1]);
+//       b = static_cast<uint8_t>(255.0f*config.specified_colors[0].rgb[2]);
+//       id = static_cast<uint16_t>(i);
+//     }else{ // raw_int
+//       r = static_cast<uint8_t>(config.specified_colors[0].rgb[0]);
+//       g = static_cast<uint8_t>(config.specified_colors[0].rgb[1]);
+//       b = static_cast<uint8_t>(config.specified_colors[0].rgb[2]);
+//       id = static_cast<uint16_t>(i);
+//     }
+//     cmap[id] = {r, g, b};
+//   }
+
+//   return cmap;
+// }
 
 std::array<uint8_t, 3> getColorFromHLS(float ratio, float luminance, float saturation) {
   cv::Mat hls(1, 1, CV_32FC3);
@@ -139,11 +157,15 @@ ImageRecolor::ImageRecolor(const Config& config,
                            const std::map<int16_t, std::array<uint8_t, 3>>& colormap)
     : config(config::checkValid(config)), color_map_(colormap) {
   
-  if (!config.specified_colors.empty()){
-    color_map_ = getColorMap(config.specified_colors);
-  }
-  else if (std::filesystem::exists(config.colormap_path)) {
-    color_map_ = loadColormap(config.colormap_path);
+  // if (!config.specified_colors.empty()){
+  //   color_map_ = getColorMap(config);
+  // }
+  // else if (std::filesystem::exists(config.colormap_path)) {
+  //   color_map_ = loadColormap(config.colormap_path);
+  // }
+
+  if (std::filesystem::exists(config.colormap_path)) {
+    color_map_ = loadColormap(config.colormap_path, name_map_);
   }
 
   const auto num_classes = config.groups.size() + 1;
@@ -159,6 +181,11 @@ ImageRecolor::ImageRecolor(const Config& config,
       label_remapping_[label + config.offset] = i;
     }
   }
+}
+
+std::map<int16_t, std::string> ImageRecolor::getNameRemap()
+{
+  return name_map_;
 }
 
 ImageRecolor ImageRecolor::fromHLS(int16_t num_classes,
@@ -283,7 +310,7 @@ void declare_config(ImageRecolor::Config& config) {
   using namespace config;
   name("ImageRecolor::Config");
   field(config.groups, "groups");
-  field(config.specified_colors, "specified_colors");
+  // field(config.specified_colors, "specified_colors");
   field(config.default_color, "default_color");
   field(config.default_id, "default_id");
   field(config.offset, "offset");

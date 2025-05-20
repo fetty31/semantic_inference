@@ -52,6 +52,8 @@ class OutputPublisher {
                const cv::Mat& labels,
                const cv::Mat& color);
 
+  ImageRecolor* getImageRecolorPtr();
+
  private:
   ImageRecolor image_recolor_;
 

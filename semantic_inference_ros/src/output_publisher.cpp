@@ -117,6 +117,11 @@ void OutputPublisher::publish(const std_msgs::Header& header,
   overlay_pub_.publish(overlay_image_->toImageMsg());
 }
 
+ImageRecolor* OutputPublisher::getImageRecolorPtr()
+{
+  return &image_recolor_;
+}
+
 void declare_config(OutputPublisher::Config& config) {
   using namespace config;
   name("OutputPublisher::Config");

@@ -13,7 +13,7 @@ find_package(semantic_inference REQUIRED)
 catkin_python_setup()
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge image_transport nodelet roscpp
+  CATKIN_DEPENDS cv_bridge image_transport nodelet roscpp semantic_inference_msgs
   DEPENDS semantic_inference
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
