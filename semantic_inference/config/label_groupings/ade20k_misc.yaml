@@ -153,20 +153,40 @@ groups:
   - {name: clock, labels: [149]}
   - {name: flag, labels: [150]}
 association:
-  - {name: Dynamic, labels: [127, 21, 81, 84, 91, 103, 117, 128, 13], source: raw_int, rgb: [255, 0, 0]}
-  - {name: Obstacle, labels: [23, 28, 44, 101, 145, 149, 150, 37,
-      83, 86, 88, 135, 140, 16, 34, 46, 57, 65, 20, 31, 32, 76, 111, 
+  - {name: Unknown, labels: [24, 40, 50, 70, 79, 98, 110, 114, 82, 93, 132, 38, 48,
+      51, 66, 72, 108, 119, 125, 130, 134, 146, 147,
+      68, 75, 90, 109, 120, 128, 131, 133, 138, 139, 
+      142, 144, 99, 121, 126, 136, 143, 148], source: raw_int, rgb: [0, 0, 0]}
+  - {name: Sky, labels: [3], source: raw_int, rgb: [102, 178, 255]}
+  - {name: Tree, labels: [5, 73], source: raw_int, rgb: [0, 255, 0]}
+  - {name: Water, labels: [22, 27, 61, 129], source: raw_int, rgb: [0, 0, 255]}
+  - {name: Ground, labels: [10, 14, 30, 47, 95], source: raw_int, rgb: [255, 255, 255]}
+  - {name: Sidewalk, labels: [12, 141], source: raw_int, rgb: [224, 224, 224]}
+  - {name: Road, labels: [7, 53, 55, 92], source: raw_int, rgb: [224, 224, 224]}
+  - {name: Vehicle, labels: [21, 81, 84, 91, 103, 117], source: raw_int, rgb: [204, 0, 0]}
+  - {name: Building, labels: [2, 26, 49, 52, 80, 85, 115], source: raw_int, rgb: [255, 255, 0]}
+  - {name: Signal, labels: [137], source: raw_int, rgb: [255, 255, 0]}
+  - {name: Rock, labels: [35], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Fence, labels: [33], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Boat, labels: [77, 104], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Sign, labels: [124], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Slope, labels: [17, 69], source: raw_int, rgb: [192, 192, 192]}
+  - {name: Bridge, labels: [62], source: raw_int, rgb: [255, 255, 255]}
+  - {name: Wall, labels: [1], source: raw_int, rgb: [255, 255, 0]}
+  - {name: Floor, labels: [4, 29, 102, 106], source: raw_int, rgb: [255, 255, 255]}
+  - {name: Ceiling, labels: [6, 87, 107], source: raw_int, rgb: [102, 178, 255]}
+  - {name: Door, labels: [15, 59], source: raw_int, rgb: [192, 192, 192]}
+  - {name: Stairs, labels: [54, 60, 97, 122], source: raw_int, rgb: [192, 192, 192]}
+  - {name: Structure, labels: [19, 39, 41, 43, 64, 89, 94, 96, 105, 123], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Window, labels: [9], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Plant, labels: [18, 67, 136], source: raw_int, rgb: [0, 102, 0]}
+  - {name: Furniture, labels: [16, 34, 46, 57, 65, 20, 31, 32, 76, 111, 
       11, 36, 42, 45, 56, 112, 113, 116, 8, 58, 118,
-      25, 63, 71, 74, 78, 100, 18, 67, 136, 9, 19, 39,
-      41, 43, 64, 89, 94, 96, 105, 123, 54, 60, 97, 122,
-      15, 59, 6, 87, 107, 1, 62, 124, 77, 104, 33, 35,
-      137, 2, 26, 49, 52, 80, 85, 115, 22, 27, 61, 129,
-      5, 73, 3, 24, 40, 50, 70, 79, 98, 110, 114, 82, 
-      93, 132, 38, 48, 51, 66, 72, 108, 119, 125, 130,
-      134, 146, 147, 68, 75, 90, 109, 120, 131, 
-      133, 138, 139, 142, 144, 99, 121, 126, 136, 143, 148], source: raw_int, rgb: [0, 255, 0]}
-  - {name: Traversable, labels: [4, 29, 102, 106, 17, 69, 7, 53, 55,
-      92, 12, 141, 10, 14, 30, 47, 95], source: raw_int, rgb: [0, 0, 255]}
+      25, 63, 71, 74, 78, 100], source: raw_int, rgb: [255, 255, 0]}
+  - {name: Wall_Decoration, labels: [23, 28, 44, 101, 145, 149, 150, 37,
+      83, 86, 88, 135, 140], source: raw_int, rgb: [204, 0, 204]}
+  - {name: Dynamic_NonHuman, labels: [127], source: raw_int, rgb: [204, 0, 0]}
+  - {name: Human, labels: [13], source: raw_int, rgb: [204, 0, 0]}
 default_color:
   - 0.9677975592919913
   - 0.44127456009157356

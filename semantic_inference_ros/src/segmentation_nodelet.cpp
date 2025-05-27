@@ -159,7 +159,7 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
 
-  SLOG(INFO) << "Encoding: " << img_ptr->encoding << " size: " << img_ptr->image.cols
+  SLOG(DEBUG) << "Encoding: " << img_ptr->encoding << " size: " << img_ptr->image.cols
               << " x " << img_ptr->image.rows << " x " << img_ptr->image.channels()
               << " is right type? "
               << (img_ptr->image.type() == CV_8UC3 ? "yes" : "no");
@@ -172,6 +172,8 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
   }
 
   const auto derotated = image_rotator_.derotate(result.labels);
+
+  
   output_pub_->publish(img_ptr->header, derotated, img_ptr->image);
 
   labels_pub_.publish(extractLabels(derotated));
