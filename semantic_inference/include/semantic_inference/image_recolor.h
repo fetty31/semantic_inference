@@ -43,12 +43,14 @@ namespace semantic_inference {
 struct GroupInfo {
   std::string name;
   std::vector<int16_t> labels;
+  std::string source;
+  std::vector<float> rgb;
 };
 
 struct AssociationInfo {
   std::string name;
-  std::string source;
   std::vector<int16_t> labels;
+  std::string source;
   std::vector<float> rgb;
 };
 

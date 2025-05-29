@@ -61,6 +61,19 @@ std::string vecToString(const std::vector<std::string>& vec) {
   return ss.str();
 }
 
+std::array<uint8_t, 3> getColorFromHLS(float ratio, float luminance, float saturation) {
+  cv::Mat hls(1, 1, CV_32FC3);
+  hls.at<float>(0) = 360.0 * ratio;
+  hls.at<float>(1) = luminance;
+  hls.at<float>(2) = saturation;
+
+  cv::Mat bgr;
+  cv::cvtColor(hls, bgr, cv::COLOR_HLS2BGR);
+  return {static_cast<uint8_t>(255 * bgr.at<float>(2)),
+          static_cast<uint8_t>(255 * bgr.at<float>(1)),
+          static_cast<uint8_t>(255 * bgr.at<float>(0))};
+}
+
 std::map<int16_t, std::array<uint8_t, 3>> loadColormap(const fs::path& filepath,
                                                       std::map<int16_t, std::string>& name_map,
                                                        bool skip_first = true,
@@ -108,7 +121,7 @@ std::map<int16_t, std::array<uint8_t, 3>> loadColormap(const fs::path& filepath,
 }
 
 /**
- * @brief Get the Color Map object. Associates dataset labels with the logic defined in config::association
+ * @brief Get the Color Map object. Associates dataset labels with the logic defined in config::groups
  * 
  * @param config 
  * @param name_map 
@@ -118,89 +131,69 @@ std::map<int16_t, std::array<uint8_t, 3>> getColorMap(const ImageRecolor::Config
                                                       std::map<int16_t, std::string>& name_map) 
 {
 
-  // For the moment, only raw & raw_int color types are accepted
-  if( (config.association[0].source != "raw") && 
-      (config.association[0].source != "raw_int")){
-        SLOG(WARNING) << "ImageRecolor: association source is not accepted yet (accepted formats are: raw, raw_int)";
-        return loadColormap(config.colormap_path, name_map);
-    }
+  std::map<int16_t, std::array<uint8_t, 3>> cmap, default_cmap;
+  const auto num_classes = config.groups.size() + 1;
 
-  std::map<int16_t, std::array<uint8_t, 3>> cmap;
+  std::map<int16_t, std::string> dummy_name;
+  if(std::filesystem::exists(config.colormap_path))
+    default_cmap = loadColormap(config.colormap_path, dummy_name);
 
-  for(size_t i=0; i < config.association.size(); i++){
+  for(size_t i=0; i < config.groups.size(); i++){
     uint8_t r, g, b;
     uint16_t id;
-    if(config.association[i].source == "raw"){
-      r = static_cast<uint8_t>(255.0f*config.association[i].rgb[0]);
-      g = static_cast<uint8_t>(255.0f*config.association[i].rgb[1]);
-      b = static_cast<uint8_t>(255.0f*config.association[i].rgb[2]);
-    }else{ // raw_int
-      r = static_cast<uint8_t>(config.association[i].rgb[0]);
-      g = static_cast<uint8_t>(config.association[i].rgb[1]);
-      b = static_cast<uint8_t>(config.association[i].rgb[2]);
+    if(!config.groups[i].rgb.empty()){ // user-specified color for this group
+      if(config.groups[i].source == "raw"){
+        r = static_cast<uint8_t>(255.0f*config.groups[i].rgb[0]);
+        g = static_cast<uint8_t>(255.0f*config.groups[i].rgb[1]);
+        b = static_cast<uint8_t>(255.0f*config.groups[i].rgb[2]);
+      }else{ // raw_int
+        r = static_cast<uint8_t>(config.groups[i].rgb[0]);
+        g = static_cast<uint8_t>(config.groups[i].rgb[1]);
+        b = static_cast<uint8_t>(config.groups[i].rgb[2]);
+      }
+    }else if(std::filesystem::exists(config.colormap_path)){
+      const auto& color = default_cmap[static_cast<uint16_t>(i)];
+      r = color[0]; g = color[1]; b = color[2];
+    }else{
+      std::array<uint8_t, 3> rgb = getColorFromHLS(static_cast<float>(i) / num_classes, 0.7, 0.7);
+      r = rgb[0]; g = rgb[1]; b = rgb[2];
     }
+    
     id = static_cast<uint16_t>(i);
     cmap[id] = {r, g, b};
-    name_map[id] = config.association[i].name;
+    name_map[id] = config.groups[i].name;
   }
 
   return cmap;
-}
-
-std::array<uint8_t, 3> getColorFromHLS(float ratio, float luminance, float saturation) {
-  cv::Mat hls(1, 1, CV_32FC3);
-  hls.at<float>(0) = 360.0 * ratio;
-  hls.at<float>(1) = luminance;
-  hls.at<float>(2) = saturation;
-
-  cv::Mat bgr;
-  cv::cvtColor(hls, bgr, cv::COLOR_HLS2BGR);
-  return {static_cast<uint8_t>(255 * bgr.at<float>(2)),
-          static_cast<uint8_t>(255 * bgr.at<float>(1)),
-          static_cast<uint8_t>(255 * bgr.at<float>(0))};
 }
 
 ImageRecolor::ImageRecolor(const Config& config,
                            const std::map<int16_t, std::array<uint8_t, 3>>& colormap)
     : config(config::checkValid(config)), color_map_(colormap) {
 
-  SLOG(INFO) << "ImageRecolor: loading config.association " << static_cast<int>(!config.association.empty());
-  
-  if (!config.association.empty()){
+  if (!config.groups.empty()){
+
+    SLOG(INFO) << "ImageRecolor: assigning color to label groups specified in yaml file";
+
     color_map_ = getColorMap(config, name_map_); // Set up colormap taking into account label association
 
-    const auto num_classes = config.association.size() + 1;
-    for (size_t i = 0; i < config.association.size(); ++i) {
-      const auto& association = config.association[i];
-      auto iter = color_map_.find(i);
-      if (iter == color_map_.end()) {
-        SLOG(WARNING) << "Missing color for association '" << association.name << "'";
-        color_map_[i] = getColorFromHLS(static_cast<float>(i) / num_classes, 0.7, 0.7);
-      }
-
-      for (const auto& label : association.labels) {
-        label_remapping_[label + config.offset] = i;
-      }
-    }
-  }
-  else if (std::filesystem::exists(config.colormap_path)) {
-    color_map_ = loadColormap(config.colormap_path, name_map_); // Set up colormap from csv (unique RGB for each dataset label)
-
-    const auto num_classes = config.groups.size() + 1;
-    for (size_t i = 0; i < config.groups.size(); ++i) {
+    for (size_t i = 0; i < config.groups.size(); ++i) { // set up label remapping
       const auto& group = config.groups[i];
-      auto iter = color_map_.find(i);
-      if (iter == color_map_.end()) {
-        SLOG(WARNING) << "Missing color for group '" << group.name << "'";
-        color_map_[i] = getColorFromHLS(static_cast<float>(i) / num_classes, 0.7, 0.7);
-      }
-
       for (const auto& label : group.labels) {
         label_remapping_[label + config.offset] = i;
       }
     }
   }
+  else if (std::filesystem::exists(config.colormap_path)) {
 
+    SLOG(INFO) << "ImageRecolor: assigning default color for each model class";
+
+    color_map_ = loadColormap(config.colormap_path, name_map_); // Set up colormap from csv (unique RGB for each dataset label)
+
+    for(auto const& element : color_map_){
+      label_remapping_[element.first] = element.first;
+    }
+  }
   
 }
 
@@ -317,6 +310,8 @@ void declare_config(GroupInfo& config) {
   name("GroupInfo");
   field(config.labels, "labels");
   field(config.name, "name");
+  field(config.source, "source");
+  field(config.rgb, "rgb");
 }
 
 void declare_config(AssociationInfo& config) {
