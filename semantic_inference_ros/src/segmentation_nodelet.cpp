@@ -49,6 +49,7 @@
 #include <thread>
 #include <string>
 #include <unordered_set>
+#include <chrono>
 
 #include "semantic_inference_ros/output_publisher.h"
 #include "semantic_inference_ros/ros_log_sink.h"
@@ -151,6 +152,9 @@ SegmentationNodelet::~SegmentationNodelet() {
 }
 
 void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg) {
+
+  // auto start_time = std::chrono::system_clock::now();
+
   cv_bridge::CvImageConstPtr img_ptr;
   try {
     img_ptr = cv_bridge::toCvShare(msg, "rgb8");
@@ -177,6 +181,13 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
   output_pub_->publish(img_ptr->header, derotated, img_ptr->image);
 
   labels_pub_.publish(extractLabels(derotated));
+
+  // auto end_time = std::chrono::system_clock::now();
+
+  // static std::chrono::duration<double> elapsed_time;
+  // elapsed_time = end_time - start_time;
+
+  // SLOG(INFO) << "Segmentation Inference took: " << elapsed_time.count()*1000.0 << " ms";
 }
 
 semantic_inference_msgs::Labels SegmentationNodelet::extractLabels(const cv::Mat& image)

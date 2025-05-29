@@ -1,8 +1,10 @@
 <launch>
 
+    <arg name="name" default="front" doc="Unique name for segmentation nodelet"/>
+
     <!-- Start_manager required if used stand-alone -->
     <arg name="start_manager" default="true" doc="Start a separate nodelet manager"/>
-    <arg name="nodelet_manager" default="nodelet_manager" doc="Name of nodelet manager"/>
+    <arg name="nodelet_manager" default="nodelet_manager_$(arg name)" doc="Name of nodelet manager"/>
     <!-- Launch file features -->
     <arg name="debug" default="false" doc="Run segmentation with gdb"/>
     <arg name="launch-prefix" default="$(eval 'gdb -ex run --args' if debug else '')" doc="Launch prefix for nodelet manager"/>
@@ -41,7 +43,7 @@
 
     <!-- 2D semantic segmentation -->
     <group unless="$(arg use_prerecorded_semantics)">
-        <node pkg="nodelet" type="nodelet" name="semantic_inference"
+        <node pkg="nodelet" type="nodelet" name="semantic_inference_$(arg name)"
               args="load semantic_inference/segmentation $(arg nodelet_manager) --no-bond"
               output="$(eval 'screen' if verbose else 'log')"
               required="true">
@@ -55,7 +57,7 @@
             <param name="worker/image_separation_s" value="$(arg min_separation_s)"/>
             <param name="image_rotator/rotation" value="$(arg rotation_type)"/>
             <param name="show_config" value="True"/>
-            <param name="show_output_config" value="False"/>
+            <param name="show_output_config" value="True"/>
         </node>
     </group>
 
