@@ -153,7 +153,7 @@ SegmentationNodelet::~SegmentationNodelet() {
 
 void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg) {
 
-  // auto start_time = std::chrono::system_clock::now();
+  auto start_time = std::chrono::system_clock::now();
 
   cv_bridge::CvImageConstPtr img_ptr;
   try {
@@ -168,26 +168,47 @@ void SegmentationNodelet::runSegmentation(const sensor_msgs::ImageConstPtr& msg)
               << " is right type? "
               << (img_ptr->image.type() == CV_8UC3 ? "yes" : "no");
 
+  auto r_start = std::chrono::system_clock::now();
   const auto rotated = image_rotator_.rotate(img_ptr->image);
+  auto r_end = std::chrono::system_clock::now();
+
+  auto m_start = std::chrono::system_clock::now();
   const auto result = segmenter_->infer(rotated);
+  auto m_end = std::chrono::system_clock::now();
+
   if (!result) {
     SLOG(ERROR) << "failed to run inference!";
     return;
   }
 
+  auto r2_start = std::chrono::system_clock::now();
   const auto derotated = image_rotator_.derotate(result.labels);
-
+  auto r2_end = std::chrono::system_clock::now();
   
+  auto o_start = std::chrono::system_clock::now();
   output_pub_->publish(img_ptr->header, derotated, img_ptr->image);
+  auto o_end = std::chrono::system_clock::now();
 
-  labels_pub_.publish(extractLabels(derotated));
+  auto l_start = std::chrono::system_clock::now();
+  if(labels_pub_.getNumSubscribers() > 0)
+    labels_pub_.publish(extractLabels(derotated));
+  
+  auto end_time = std::chrono::system_clock::now();
 
-  // auto end_time = std::chrono::system_clock::now();
+  static std::chrono::duration<double> elapsed_time, m_elapsed_time, r_elapsed_time, r2_elapsed_time, o_elapsed_time, l_elapsed_time;
+  elapsed_time = end_time - start_time;
+  m_elapsed_time = m_end - m_start;
+  r_elapsed_time = r_end - r_start;
+  r2_elapsed_time = r2_end - r2_start;
+  o_elapsed_time = o_end - o_start;
+  l_elapsed_time = end_time - l_start;
 
-  // static std::chrono::duration<double> elapsed_time;
-  // elapsed_time = end_time - start_time;
-
-  // SLOG(INFO) << "Segmentation Inference took: " << elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "Segmentation total time: " << elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "   only inference: " << m_elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "   only rotate: " << r_elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "   only derotate: " << r2_elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "   only output publish: " << o_elapsed_time.count()*1000.0 << " ms";
+  SLOG(INFO) << "   only labels publish: " << l_elapsed_time.count()*1000.0 << " ms";
 }
 
 semantic_inference_msgs::Labels SegmentationNodelet::extractLabels(const cv::Mat& image)
