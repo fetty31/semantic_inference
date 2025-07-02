@@ -17,6 +17,8 @@
     <arg name="max_image_queue_size" default="1" doc="Max number of images to store"/>
     <arg name="min_separation_s" default="0.0" doc="Enforced separation between input images"/>
     <arg name="rotation_type" default="none" doc="Input camera rotation"/>
+    <arg name="publish_color" default="true" doc="Whether to publish semantics colored image"/>
+    <arg name="publish_overlay" default="true" doc="Whether to publish semantics overlay image"/>
 
     <!-- segmentation model options. Make sure you have one downloaded -->
     <!--<arg name="model_name" default="mobilenetv2_360_640"/>-->
@@ -53,6 +55,8 @@
             <param name="segmenter/model/engine_file" value="$(find semantic_inference)/engines/$(arg model_name).trt"/>
             <param name="segmenter/model/force_rebuild" value="$(arg force_rebuild)"/>
             <param name="output/recolor/colormap_path" value="$(arg colormap_path)"/>
+            <param name="output/publish_overlay" value="$(arg publish_overlay)"/>
+            <param name="output/publish_color" value="$(arg publish_color)"/>
             <param name="worker/max_queue_size" value="$(arg max_image_queue_size)"/>
             <param name="worker/image_separation_s" value="$(arg min_separation_s)"/>
             <param name="image_rotator/rotation" value="$(arg rotation_type)"/>
